@@ -1,0 +1,107 @@
+branches:
+  - main
+  - name: develop
+    prerelease: true
+    channel: develop
+
+plugins:
+  - - "@semantic-release/commit-analyzer"
+    - preset: conventionalcommits
+      releaseRules:
+        - type: feat
+          release: minor
+        - type: fix
+          release: patch
+        - type: perf
+          release: patch
+        - type: revert
+          release: patch
+        - type: docs
+          release: patch
+        - type: style
+          release: patch
+        - type: refactor
+          release: patch
+        - type: test
+          release: patch
+        - type: build
+          release: patch
+        - type: ci
+          release: patch
+        - type: chore
+          scope: "!*snapshot*"
+          release: patch
+        - breaking: true
+          release: major
+        - type: chore
+          release: false
+
+  - - "@semantic-release/release-notes-generator"
+    - preset: conventionalcommits
+      presetConfig:
+        types:
+          - type: feat
+            section: "✨ Features"
+            hidden: false
+          - type: fix
+            section: "🐛 Bug Fixes"
+            hidden: false
+          - type: perf
+            section: "⚡ Performance Improvements"
+            hidden: false
+          - type: revert
+            section: "⏪ Reverts"
+            hidden: false
+          - type: docs
+            section: "📚 Documentation"
+            hidden: false
+          - type: style
+            section: "💄 Styles"
+            hidden: false
+          - type: refactor
+            section: "♻️ Code Refactoring"
+            hidden: false
+          - type: test
+            section: "✅ Tests"
+            hidden: false
+          - type: build
+            section: "📦 Build System"
+            hidden: false
+          - type: ci
+            section: "👷 Continuous Integration"
+            hidden: false
+          - type: chore
+            section: "🔧 Miscellaneous Chores"
+            hidden: true
+
+  - - "@semantic-release/changelog"
+    - changelogFile: CHANGELOG.md
+
+  - - "semantic-release-replace-plugin"
+    - replacements:
+        - files:
+            - pubspec.yaml
+          from: "version: .*"
+          to: "version: ${nextRelease.version}+${process.env.BUILD_NUMBER}"
+
+  - - "@semantic-release/exec"
+    - prepareCmd: "flutter build apk --release && flutter build appbundle --release"
+      publishCmd: "echo 'Version ${nextRelease.version} released!'"
+
+  - - "@semantic-release/git"
+    - assets:
+        - pubspec.yaml
+        - CHANGELOG.md
+      message: |
+        chore(release): ${nextRelease.version} [skip ci]
+
+        ${nextRelease.notes}
+
+  - - "@semantic-release/github"
+    - assets:
+        - path: build/app/outputs/flutter-apk/app-release.apk
+          label: "APK Release"
+          name: "app-release-${nextRelease.version}.apk"
+        - path: build/app/outputs/bundle/release/app-release.aab
+          label: "App Bundle"
+          name: "app-release-${nextRelease.version}.aab"
