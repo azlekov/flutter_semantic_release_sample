@@ -1,5 +1,35 @@
 branches:
   - main
+  - name: develop
+    prerelease: true
+  - name: 'feature/*'
+    prerelease: 'feature-*'
+  - name: 'feat/*'
+    prerelease: 'feat-*'
+  - name: 'fix/*'
+    prerelease: 'fix-*'
+  - name: 'bugfix/*'
+    prerelease: 'bugfix-*'
+  - name: 'hotfix/*'
+    prerelease: 'hotfix-*'
+  - name: 'refactor/*'
+    prerelease: 'refactor-*'
+  - name: 'perf/*'
+    prerelease: 'perf-*'
+  - name: 'test/*'
+    prerelease: 'test-*'
+  - name: 'docs/*'
+    prerelease: 'docs-*'
+  - name: 'style/*'
+    prerelease: 'style-*'
+  - name: 'chore/*'
+    prerelease: 'chore-*'
+  - name: 'ci/*'
+    prerelease: 'ci-*'
+  - name: 'build/*'
+    prerelease: 'build-*'
+  - name: 'release/*'
+    prerelease: 'rc'
 
 plugins:
   - - "@semantic-release/commit-analyzer"

@@ -24,15 +24,22 @@ fi
 # Get the git repository root
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
+# Determine which branch configuration to use
+if [ "$BRANCH" = "develop" ]; then
+  # For develop branch, use the main release config which includes prerelease support
+  CONFIG_FILE="${REPO_ROOT}/.releaserc.yml"
+else
+  # For other branches, analyze against main
+  CONFIG_FILE="${REPO_ROOT}/.releaserc.local.yml"
+fi
+
 # Run semantic-release in dry-run mode to get the next version
-# Using explicit parameters and analyzing commits from main branch
+# Using the current branch to properly detect prerelease versions
 NEXT_VERSION=$(npx semantic-release \
   --dry-run \
-  --repository-url "file://${REPO_ROOT}/.git" \
-  --branches main \
-  --plugins @semantic-release/commit-analyzer \
-  --plugins @semantic-release/release-notes-generator \
-  2>&1 | grep -E "next release version is [0-9]+\.[0-9]+\.[0-9]+" | sed 's/.*next release version is \([0-9.]*\).*/\1/')
+  --no-ci \
+  --extends "$CONFIG_FILE" \
+  2>&1 | grep -E "next release version is [0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?" | sed 's/.*next release version is \([^ ]*\).*/\1/')
 
 # If semantic-release couldn't determine a version, try to get the latest tag
 if [ -z "$NEXT_VERSION" ]; then
