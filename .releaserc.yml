@@ -105,3 +105,10 @@ plugins:
         - path: build/app/outputs/bundle/release/app-release.aab
           label: "App Bundle"
           name: "app-release-${nextRelease.version}.aab"
+
+  - - "@kilianpaquier/semantic-release-backmerge"
+    - commit: "chore(release): merge branch ${from} into ${to} [skip ci]"
+      targets:
+        - from: main
+          to: develop
+      title: "Automatic merge failure"
