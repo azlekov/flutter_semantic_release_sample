@@ -53,7 +53,8 @@ jobs:
             @semantic-release/changelog \
             @semantic-release/exec \
             semantic-release-replace-plugin \
-            conventional-changelog-conventionalcommits
+            conventional-changelog-conventionalcommits \
+            @kilianpaquier/semantic-release-backmerge
 
       - name: Get build number
         id: build
