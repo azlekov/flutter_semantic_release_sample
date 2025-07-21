@@ -1,10 +1,7 @@
 #!/bin/bash
 
 # Script to generate SNAPSHOT version for local development
-# Format: MAJOR.MINOR.PATCH-BRANCH.COMMIT
-
-# Get the base version from pubspec.yaml
-BASE_VERSION=$(grep "^version:" pubspec.yaml | sed 's/version: \([0-9.]*\).*/\1/')
+# Uses semantic-release dry-run to calculate next version based on conventional commits
 
 # Get current git branch name (sanitized for version string)
 BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/[^a-zA-Z0-9-]/-/g')
@@ -15,8 +12,44 @@ COMMIT=$(git rev-parse --short HEAD)
 # Get build number as total number of commits
 BUILD_NUMBER=$(git rev-list --count HEAD)
 
-# Construct the SNAPSHOT version (without build number)
-SNAPSHOT_VERSION="${BASE_VERSION}-${BRANCH}.${COMMIT}"
+# Ensure we have the latest tags from main branch
+git fetch origin main:main --tags 2>/dev/null || true
+
+# Install semantic-release dependencies if not present
+if [ ! -d "node_modules" ] || [ ! -d "node_modules/semantic-release" ]; then
+  echo "Installing semantic-release dependencies..."
+  npm install --no-save semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator >/dev/null 2>&1
+fi
+
+# Get the git repository root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Run semantic-release in dry-run mode to get the next version
+# Using explicit parameters and analyzing commits from main branch
+NEXT_VERSION=$(npx semantic-release \
+  --dry-run \
+  --repository-url "file://${REPO_ROOT}/.git" \
+  --branches main \
+  --plugins @semantic-release/commit-analyzer \
+  --plugins @semantic-release/release-notes-generator \
+  2>&1 | grep -E "next release version is [0-9]+\.[0-9]+\.[0-9]+" | sed 's/.*next release version is \([0-9.]*\).*/\1/')
+
+# If semantic-release couldn't determine a version, try to get the latest tag
+if [ -z "$NEXT_VERSION" ]; then
+  # Get the latest version tag from main branch
+  LATEST_TAG=$(git tag -l --merged main | grep -E "^v?[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1)
+  if [ -n "$LATEST_TAG" ]; then
+    # Remove 'v' prefix if present
+    BASE_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+  else
+    # Fallback to version in pubspec.yaml
+    BASE_VERSION=$(grep "^version:" pubspec.yaml | sed 's/version: \([0-9.]*\).*/\1/')
+  fi
+  NEXT_VERSION="$BASE_VERSION"
+fi
+
+# Construct the SNAPSHOT version
+SNAPSHOT_VERSION="${NEXT_VERSION}-${BRANCH}.${COMMIT}"
 
 # Update local.properties with SNAPSHOT version info
 LOCAL_PROPS="android/local.properties"
